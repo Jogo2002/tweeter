@@ -1,3 +1,7 @@
+"""
+Starts a hello world webserver.
+"""
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import uvicorn
