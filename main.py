@@ -26,6 +26,9 @@ async def login(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="login.html",
+        context={
+            "is_logged_in": "False"
+        }
     )
 
 
