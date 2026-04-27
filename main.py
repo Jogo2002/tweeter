@@ -12,9 +12,13 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/home", response_class=HTMLResponse)
 async def index(request: Request):
+    is_logged_in = "True"
     return templates.TemplateResponse(
         request=request,
         name="index.html",
+        context={
+            "is_logged_in": is_logged_in
+        }
     )
 
 @app.get("/login", response_class=HTMLResponse)

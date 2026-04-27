@@ -6,8 +6,11 @@
         <h1>Welcome to Twitter Clone</h1>
         <ul>
             <li><a href="/home">Home</a></li>
-            <li><a href="/login">Login</a></li>
+            {% if is_logged_in == "True" %}
             <li><a href="/logout">Logout</a></li>
+            {% else %}
+            <li><a href="/login">Login</a></li>
+            {% endif %}
             <li><a href="/create_user">Create User</a></li>
             <li><a href="/create_message">Create Message</a></li>
         </ul>
