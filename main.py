@@ -5,19 +5,35 @@ Starts a hello world webserver.
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from dbm import sqlite3
 import uvicorn
+
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-@app.get("/home", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     is_logged_in = "True"
+
+    con = sqlite3.connect("twitter_clone.db")
+    cur = con.cursor()
+    sql = """
+    SELECT username FROM useres WHERE id = 3
+    """
+
+    cur.execute(sql)
+    for row in cur.fetchall():
+        username = row[0]
+
+    username = "temp"
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
-            "is_logged_in": is_logged_in
+            "is_logged_in": is_logged_in,
+            "username": username,
         }
     )
 
