@@ -5,7 +5,7 @@ Starts a hello world webserver.
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from dbm import sqlite3
+# from dbm import sqlite3
 import uvicorn
 
 
@@ -17,15 +17,15 @@ templates = Jinja2Templates(directory="templates")
 async def index(request: Request):
     is_logged_in = "True"
 
-    con = sqlite3.connect("twitter_clone.db")
-    cur = con.cursor()
-    sql = """
-    SELECT username FROM useres WHERE id = 3
-    """
+    # con = sqlite3.connect("twitter_clone.db")
+    # cur = con.cursor()
+    # sql = """
+    # SELECT username FROM useres WHERE id = 3
+    # """
 
-    cur.execute(sql)
-    for row in cur.fetchall():
-        username = row[0]
+    # cur.execute(sql)
+    # for row in cur.fetchall():
+    #     username = row[0]
 
     username = "temp"
     return templates.TemplateResponse(
