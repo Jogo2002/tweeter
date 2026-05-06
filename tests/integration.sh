@@ -1,6 +1,5 @@
-# set ex:
-# -e stands for "error" stop the script if there is an error
-# -x print the contents of the script as it is executed
+# -e stands for error: stops the script if there are errors
+# -x prints  contents of the script as it runs it
 set -ex
-curl -sfS http://127.0.0.1:8000/ > /dev/null
-curl -sfS http://127.0.0.1:8000/login > /dev/null 
+curl -sfS http://127.0.0.1:8080 > /dev/null
+curl -sfS http://127.0.0.1:8080/login > /dev/null 

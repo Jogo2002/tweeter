@@ -1,6 +1,15 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h2>Main page</h2>
-<p>Username: {{username}}!</p>
+<h2>Twitter Messages Index</h2>
+
+<img src="{{ url_for('static', path='twitter.gif') }}" class="gif">
+
+{% for message in messages %}
+    <div>
+        <p><em>@{{ message.username }}</em>, Age: {{ message.age }}</p>
+        <p>{{ message.message }}</p>
+        <p>{{ message.created_at }}</p>
+    </div>
+{% endfor %}
 {% endblock %}
