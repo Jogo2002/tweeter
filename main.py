@@ -8,6 +8,22 @@ from fastapi.templating import Jinja2Templates
 # from dbm import sqlite3
 import uvicorn
 
+def check_credentials(request: Request):
+    """
+
+    """
+
+    username = request.query_params.get("username")
+    password = request.query_params.get("password")
+    print('username = ', username)
+    print('password = ', password)
+     # FIXME: this should connect to the db
+
+    if username.lower() == 'trump' and password == 12345:
+        return 'Trump'
+    else: 
+        return False
+
 
 
 app = FastAPI()
@@ -15,7 +31,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    is_logged_in = "True"
+    is_logged_in = check_credentials(request)
 
     # con = sqlite3.connect("twitter_clone.db")
     # cur = con.cursor()
@@ -32,10 +48,12 @@ async def index(request: Request):
         request=request,
         name="index.html",
         context={
-            "is_logged_in": is_logged_in,
+            "is_logged_in": check_credentials(request),
             "username": username,
         }
     )
+
+
 
 @app.get("/login", response_class=HTMLResponse)
 async def login(request: Request):
@@ -43,7 +61,17 @@ async def login(request: Request):
         request=request,
         name="login.html",
         context={
-            "is_logged_in": "False"
+            "is_logged_in": check_credentials(request)
+        }
+    )
+
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="logout.html",
+        context={
+            "is_logged_in": check_credentials(request)
         }
     )
 
