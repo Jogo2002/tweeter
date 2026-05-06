@@ -1,8 +1,8 @@
 # Twitter Clone 
 
-This project is a simple Twitter clone built with FastAPI, Jinja2 templates, SQLite, and cookie-based login behavior.
+This project is a simple Twitter clone built with FastAPI, Jinja2 templates, SQLite.
 
-![Screenshot of Twitter Clone Webpage](twitterclone.png)
+![Screenshot of Twitter Clone Webpage](homepage.png)
 
 The webpage allows users to view messages from a database, log in using query parameters, log out by clearing cookies, and create users and messages.
 
