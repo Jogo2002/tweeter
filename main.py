@@ -113,7 +113,7 @@ async def login(request: Request): # can't write doctests for async functions
                 error = 'Password is incorrect.'
             else:
                 con.close()
-                response = RedirectResponse(url='/', status_code=302)
+                response = RedirectResponse(url='/')
                 response.set_cookie(key='username', value=submitted_username)
                 response.set_cookie(key='password', value=submitted_password)
                 return response
@@ -145,15 +145,35 @@ async def create_message(request: Request):
 
 @app.get('/create_user', response_class=HTMLResponse)
 async def create_user(request: Request):
+    submitted_username = request.query_params.get('username')
+    submitted_password = request.query_params.get('password')
+    submitted_password2 = request.query_params.get('password2')
+
+    error = None
+    if submitted_username is not None:
+        if submitted_password != submitted_password2:
+            error = 'Passwords do not match.'
+        else:
+            try:
+                con = sqlite3.connect('twitter_clone.db')
+                cur = con.cursor()
+                cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', (submitted_username, submitted_password))
+                con.commit()
+                con.close()
+                response = RedirectResponse(url='/login')
+                return response
+            except sqlite3.IntegrityError:
+                error = 'An account with that username already exists.'
+
     return templates.TemplateResponse(
         request=request,
         name='create_user.html',
         context={
             'is_logged_in': check_credentials(request),
-            "username": check_credentials(request),
+            'username': check_credentials(request),
+            'error': error,
         }
     )
-
 
 if __name__ == '__main__':
     uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)
