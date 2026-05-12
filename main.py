@@ -34,10 +34,15 @@ def check_credentials(request: Request):
     username = cookie_username
     password = cookie_password
 
-    ## FIXME : this should connect to the db
-    if username == 'Trump' and password == '12345':
-        print(f"logged in as {username}")
-        return 'Trump'
+    con = sqlite3.connect('twitter_clone.db')
+    cur = con.cursor()
+    cur.execute('SELECT username FROM users WHERE username = ? AND password = ?', (username, password))
+    row = cur.fetchone()
+    con.close()
+
+    if row:
+        print(f"logged in as {row[0]}")
+        return row[0]
     else:
         print('not logged in')
         return None
@@ -90,16 +95,34 @@ async def logout(request: Request):
 
 @app.get('/login', response_class=HTMLResponse)
 async def login(request: Request): # can't write doctests for async functions
+    submitted_username = request.query_params.get('username')
+    submitted_password = request.query_params.get('password')
+
+    error = None
+    if submitted_username is not None or submitted_password is not None:
+        con = sqlite3.connect('twitter_clone.db')
+        cur = con.cursor()
+        cur.execute('SELECT username FROM users WHERE username = ?', (submitted_username,))
+        user_row = cur.fetchone()
+        if not user_row:
+            error = 'This username does not match our records.'
+        else:
+            cur.execute('SELECT username FROM users WHERE username = ? AND password = ?', (submitted_username, submitted_password))
+            if not cur.fetchone():
+                error = 'Password is incorrect.'
+        con.close()
+
     response = templates.TemplateResponse(
         request=request,
         name='login.html',
         context={
             'is_logged_in': check_credentials(request),
-            "username": check_credentials(request),
+            'username': check_credentials(request),
+            'error': error,
         }
     )
-    response.set_cookie(key='username', value=request.query_params.get('username'))
-    response.set_cookie(key='password', value=request.query_params.get('password'))
+    response.set_cookie(key='username', value=submitted_username)
+    response.set_cookie(key='password', value=submitted_password)
     return response
 
 @app.get('/create_message', response_class=HTMLResponse)

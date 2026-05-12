@@ -4,12 +4,20 @@
 {% block content %}
 <h2>Login Page</h2>
 
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+{% if not is_logged_in %}
 <form>
     <table>
         <tr><td>username: </td><td><input name= "username"></td></tr>
-        <tr><td>password: </td><td><input name= "password"></td></tr>
+        <tr><td>password: </td><td><input type="password" name= "password"></td></tr>
         <tr><td>         </td><td><input type="submit" value="Log in"><td></td><tr>
     </table>
 </form>
+{% else %}
+<p>You are already logged in.</p>
+{% endif %}
 
 {% endblock %}
