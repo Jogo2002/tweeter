@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>@{{ profile_username }}</h2>
+{% if profile_age %}
+<p>Age: {{ profile_age }}</p>
+{% endif %}
+
+<h3>About</h3>
+{% if profile_description %}
+<p>{{ profile_description }}</p>
+{% else %}
+<p><em>No description yet.</em></p>
+{% endif %}
+
+{% if is_owner %}
+<details>
+    <summary>Edit description</summary>
+    <form>
+        <textarea name="description" rows="3" cols="50">{{ profile_description or '' }}</textarea>
+        <br>
+        <input type="submit" value="Save">
+    </form>
+</details>
+
+{% if password_success %}
+<p style="color: green;">Password changed successfully.</p>
+{% endif %}
+{% if password_error %}
+<p style="color: red;">{{ password_error }}</p>
+{% endif %}
+<details>
+    <summary>Change password</summary>
+    <form action="/change_password">
+        <table>
+            <tr><td>Current password: </td><td><input type="password" name="old_password"></td></tr>
+            <tr><td>New password: </td><td><input type="password" name="new_password"></td></tr>
+            <tr><td>Confirm new password: </td><td><input type="password" name="new_password2"></td></tr>
+            <tr><td></td><td><input type="submit" value="Change password"></td></tr>
+        </table>
+    </form>
+</details>
+
+<p><a href="/delete_user" onclick="return confirm('Do you want to delete your account and all messages? This cannot be undone.')">Delete Account</a></p>
+{% endif %}
+
+<hr>
+<h3>Messages</h3>
+{% for message in messages %}
+    <div>
+        <p>{{ message.message|detect_url }}</p>
+        <p>{{ message.created_at }}</p>
+        {% if is_owner %}
+        <a href="/delete_message?id={{ message.id }}">Delete</a>
+        {% endif %}
+    </div>
+{% else %}
+    <p>No messages yet.</p>
+{% endfor %}
+
+{% endblock %}
