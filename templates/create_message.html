@@ -2,5 +2,16 @@
 
 {% block content %}
 <h2>Create Message</h2>
-<p1>What's on your mind?</p1>
+
+{% if is_logged_in %}
+<form>
+    <table>
+        <tr><td>Message: </td><td><textarea name="message" rows="4" cols="50"></textarea></td></tr>
+        <tr><td>         </td><td><input type="submit" value="Post"></td></tr>
+    </table>
+</form>
+{% else %}
+<p>You must be <a href="/login">logged in</a> to post a message.</p>
+{% endif %}
+
 {% endblock %}

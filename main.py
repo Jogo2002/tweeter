@@ -134,12 +134,26 @@ async def login(request: Request): # can't write doctests for async functions
 
 @app.get('/create_message', response_class=HTMLResponse)
 async def create_message(request: Request):
+    username = check_credentials(request)
+    submitted_message = request.query_params.get('message')
+
+    if username and submitted_message is not None:
+        con = sqlite3.connect('twitter_clone.db')
+        cur = con.cursor()
+        cur.execute('SELECT id FROM users WHERE username = ?', (username,))
+        row = cur.fetchone()
+        if row:
+            cur.execute('INSERT INTO messages (sender_id, message) VALUES (?, ?)', (row[0], submitted_message))
+            con.commit()
+        con.close()
+        return RedirectResponse(url='/')
+
     return templates.TemplateResponse(
         request=request,
         name='create_message.html',
         context={
-            'is_logged_in': check_credentials(request),
-            "username": check_credentials(request),
+            'is_logged_in': username,
+            'username': username,
         }
     )
 
