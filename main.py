@@ -3,7 +3,7 @@ Starts a Twitter Clone Webpage.
 '''
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import sqlite3
@@ -43,6 +43,7 @@ def check_credentials(request: Request):
     if row:
         print(f"logged in as {row[0]}")
         return row[0]
+        
     else:
         print('not logged in')
         return None
@@ -110,6 +111,12 @@ async def login(request: Request): # can't write doctests for async functions
             cur.execute('SELECT username FROM users WHERE username = ? AND password = ?', (submitted_username, submitted_password))
             if not cur.fetchone():
                 error = 'Password is incorrect.'
+            else:
+                con.close()
+                response = RedirectResponse(url='/', status_code=302)
+                response.set_cookie(key='username', value=submitted_username)
+                response.set_cookie(key='password', value=submitted_password)
+                return response
         con.close()
 
     response = templates.TemplateResponse(
@@ -147,5 +154,7 @@ async def create_user(request: Request):
         }
     )
 
+
 if __name__ == '__main__':
     uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)
+
