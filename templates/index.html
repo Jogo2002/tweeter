@@ -48,4 +48,15 @@
         {% endfor %}
     </div>
 {% endfor %}
+
+<div style="margin-top: 20px;">
+    {% if has_prev %}
+        <a href="/?page={{ page - 1 }}">&laquo; Previous</a>
+    {% endif %}
+    <span> Page {{ page + 1 }} / {{ num_pages }} </span>
+    {% if has_next %}
+        <a href="/?page={{ page + 1 }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
 {% endblock %}  

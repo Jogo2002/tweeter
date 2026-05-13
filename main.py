@@ -79,26 +79,50 @@ def check_credentials(request: Request):
 
 @app.get('/', response_class=HTMLResponse)
 async def index(request: Request):
-    # Extract username from database
+
+    # showing only 50 messages 
+    try:
+        page = max(0, int(request.query_params.get('page', 0)))
+    except ValueError:
+        page = 0
+    page_size = 50
+    offset = page * page_size
+
     con = sqlite3.connect('twitter_clone.db')
     cur = con.cursor()
 
-    sql = """
-    SELECT users.username, users.age, messages.message, messages.created_at, messages.id, messages.reply_to_id
-    FROM messages
-    JOIN users ON messages.sender_id = users.id
-    ORDER BY messages.created_at DESC;
-    """
+    cur.execute('''
+        SELECT users.username, users.age, messages.message, messages.created_at, messages.id, messages.reply_to_id
+        FROM messages
+        JOIN users ON messages.sender_id = users.id
+        WHERE messages.reply_to_id IS NULL
+        ORDER BY messages.created_at DESC
+        LIMIT ? OFFSET ?
+    ''', (page_size, offset))
+    top_rows = cur.fetchall()
 
-    cur.execute(sql)
-    rows = cur.fetchall()
+    top_ids = [row[4] for row in top_rows]
+    if top_ids:
+        placeholders = ','.join('?' * len(top_ids))
+        cur.execute(f'''
+            SELECT users.username, users.age, messages.message, messages.created_at, messages.id, messages.reply_to_id
+            FROM messages
+            JOIN users ON messages.sender_id = users.id
+            WHERE messages.reply_to_id IN ({placeholders})
+            ORDER BY messages.created_at ASC
+        ''', top_ids)
+        reply_rows = cur.fetchall()
+    else:
+        reply_rows = []
 
-    all_ids = {row[4] for row in rows}
+    cur.execute('SELECT COUNT(*) FROM messages WHERE reply_to_id IS NULL')
+    total_top_level = cur.fetchone()[0]
+    num_pages = (total_top_level + page_size - 1) // page_size
+    con.close()
+
     replies_by_parent = {}
-    top_level = []
-
-    for row in rows:
-        msg = {
+    for row in reply_rows:
+        replies_by_parent.setdefault(row[5], []).append({
             "username": row[0],
             "age": row[1],
             "message": row[2],
@@ -106,19 +130,23 @@ async def index(request: Request):
             "id": row[4],
             "reply_to_id": row[5],
             "replies": [],
+        })
+
+    messages = []
+    for row in top_rows:
+        msg = {
+            "username": row[0],
+            "age": row[1],
+            "message": row[2],
+            "created_at": row[3],
+            "id": row[4],
+            "reply_to_id": row[5],
+            "replies": replies_by_parent.get(row[4], []),
         }
-        if msg["reply_to_id"] is None or msg["reply_to_id"] not in all_ids:
-            top_level.append(msg)
-        else:
-            replies_by_parent.setdefault(msg["reply_to_id"], []).append(msg)
+        messages.append(msg)
 
-    for msg in top_level:
-        msg["replies"] = sorted(
-            replies_by_parent.get(msg["id"], []),
-            key=lambda m: m["created_at"]
-        )
-
-    messages = top_level
+    has_prev = page > 0
+    has_next = (offset + page_size) < total_top_level
 
     return templates.TemplateResponse(
         request=request,
@@ -128,9 +156,12 @@ async def index(request: Request):
             "username": check_credentials(request),
             "messages": messages,
             "not_found": request.query_params.get('not_found'),
+            "page": page,
+            "has_prev": has_prev,
+            "has_next": has_next,
+            "num_pages": num_pages,
         }
     )
-    con.close()
 
 @app.get('/messages.json')
 async def messages_json():
