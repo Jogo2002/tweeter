@@ -34,6 +34,14 @@ try:
 except sqlite3.OperationalError:
     pass
 
+try:
+    _con = sqlite3.connect('twitter_clone.db')
+    _con.execute('ALTER TABLE messages ADD COLUMN reply_to_id INTEGER')
+    _con.commit()
+    _con.close()
+except sqlite3.OperationalError:
+    pass
+
 def check_credentials(request: Request):
     '''
     returns username is user is logged in.
@@ -76,7 +84,7 @@ async def index(request: Request):
     cur = con.cursor()
 
     sql = """
-    SELECT users.username, users.age, messages.message, messages.created_at, messages.id
+    SELECT users.username, users.age, messages.message, messages.created_at, messages.id, messages.reply_to_id
     FROM messages
     JOIN users ON messages.sender_id = users.id
     ORDER BY messages.created_at DESC;
@@ -84,16 +92,33 @@ async def index(request: Request):
 
     cur.execute(sql)
     rows = cur.fetchall()
-    messages = []
+
+    all_ids = {row[4] for row in rows}
+    replies_by_parent = {}
+    top_level = []
 
     for row in rows:
-        messages.append({
+        msg = {
             "username": row[0],
             "age": row[1],
             "message": row[2],
             "created_at": row[3],
-            "id": row[4]
-        })
+            "id": row[4],
+            "reply_to_id": row[5],
+            "replies": [],
+        }
+        if msg["reply_to_id"] is None or msg["reply_to_id"] not in all_ids:
+            top_level.append(msg)
+        else:
+            replies_by_parent.setdefault(msg["reply_to_id"], []).append(msg)
+
+    for msg in top_level:
+        msg["replies"] = sorted(
+            replies_by_parent.get(msg["id"], []),
+            key=lambda m: m["created_at"]
+        )
+
+    messages = top_level
 
     return templates.TemplateResponse(
         request=request,
@@ -178,12 +203,16 @@ async def create_message(request: Request):
     submitted_message = request.query_params.get('message')
 
     if username and submitted_message is not None:
+        reply_to_id = request.query_params.get('reply_to_id')
         con = sqlite3.connect('twitter_clone.db')
         cur = con.cursor()
         cur.execute('SELECT id FROM users WHERE username = ?', (username,))
         row = cur.fetchone()
         if row:
-            cur.execute('INSERT INTO messages (sender_id, message) VALUES (?, ?)', (row[0], submitted_message))
+            cur.execute(
+                'INSERT INTO messages (sender_id, message, reply_to_id) VALUES (?, ?, ?)',
+                (row[0], submitted_message, reply_to_id if reply_to_id else None)
+            )
             con.commit()
         con.close()
         return RedirectResponse(url='/')

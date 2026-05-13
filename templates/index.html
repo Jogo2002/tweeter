@@ -22,6 +22,30 @@
         {% if message.username == username %}
         <a href="/delete_message?id={{ message.id }}">Delete</a>
         {% endif %}
+
+        {% if is_logged_in %}
+        <details>
+            <summary>Reply</summary>
+            <form action="/create_message">
+                <input type="hidden" name="reply_to_id" value="{{ message.id }}">
+                <textarea name="message" rows="2" cols="40"></textarea>
+                <br>
+                <input type="submit" value="Reply">
+            </form>
+        </details>
+        {% endif %}
+
+        {% for reply in message.replies %}
+            <div style="margin-left: 40px; border-left: 2px solid #ccc; padding-left: 10px;">
+                <img src="https://robohash.org/{{ reply.username }}" width="40" height="40">
+                <p><em><a href="/user/{{ reply.username }}">@{{ reply.username }}</a></em></p>
+                <p>{{ reply.message|detect_url }}</p>
+                <p>{{ reply.created_at }}</p>
+                {% if reply.username == username %}
+                <a href="/delete_message?id={{ reply.id }}">Delete</a>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
 {% endfor %}
 {% endblock %}  
