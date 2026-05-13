@@ -287,26 +287,29 @@ async def create_user(request: Request):
     forbidden_chars = [' ', '<', '>', '.', ',', ';', ':', '"', "'", '\\', '/', '|', '?', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')']
 
     if submitted_username is not None:
-        for char in forbidden_chars:
-            if char in submitted_username:
-                error = 'Username cannot contain any of the following characters:\n' + ' '.join(forbidden_chars)
-                break
-    elif submitted_password != submitted_password2:
-        error = 'Passwords do not match.'
-    else:
-        try:
-            con = sqlite3.connect('twitter_clone.db')
-            cur = con.cursor()
-            age_value = int(submitted_age) if submitted_age else None
-            cur.execute('INSERT INTO users (username, password, age) VALUES (?, ?, ?)', (submitted_username, submitted_password, age_value))
-            con.commit()
-            con.close()
-            response = RedirectResponse(url='/')
-            response.set_cookie(key='username', value=submitted_username)
-            response.set_cookie(key='password', value=submitted_password)
-            return response
-        except sqlite3.IntegrityError:
-            error = 'An account with that username already exists.'
+        if len(submitted_username) < 2:
+            error = 'Username must be at least 2 characters.'
+        else:
+            for char in forbidden_chars:
+                if char in submitted_username:
+                    error = 'Username cannot contain any of the following characters:\n' + ' '.join(forbidden_chars)
+                    break
+        if error is None and submitted_password != submitted_password2:
+            error = 'Passwords do not match.'
+        if error is None:
+            try:
+                con = sqlite3.connect('twitter_clone.db')
+                cur = con.cursor()
+                age_value = int(submitted_age) if submitted_age else None
+                cur.execute('INSERT INTO users (username, password, age) VALUES (?, ?, ?)', (submitted_username, submitted_password, age_value))
+                con.commit()
+                con.close()
+                response = RedirectResponse(url='/')
+                response.set_cookie(key='username', value=submitted_username)
+                response.set_cookie(key='password', value=submitted_password)
+                return response
+            except sqlite3.IntegrityError:
+                error = 'An account with that username already exists.'
 
     return templates.TemplateResponse(
         request=request,
