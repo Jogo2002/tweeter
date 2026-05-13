@@ -282,22 +282,29 @@ async def create_user(request: Request):
     submitted_password2 = request.query_params.get('password2')
 
     error = None
+
+    forbidden_chars = [' ', '<', '>', '.', ',', ';', ':', '"', "'", '\\', '/', '|', '?', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')']
+
     if submitted_username is not None:
-        if submitted_password != submitted_password2:
-            error = 'Passwords do not match.'
-        else:
-            try:
-                con = sqlite3.connect('twitter_clone.db')
-                cur = con.cursor()
-                cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', (submitted_username, submitted_password))
-                con.commit()
-                con.close()
-                response = RedirectResponse(url='/')
-                response.set_cookie(key='username', value=submitted_username)
-                response.set_cookie(key='password', value=submitted_password)
-                return response
-            except sqlite3.IntegrityError:
-                error = 'An account with that username already exists.'
+        for char in forbidden_chars:
+            if char in submitted_username:
+                error = 'Username cannot contain any of the following characters:\n' + ' '.join(forbidden_chars)
+                break
+    elif submitted_password != submitted_password2:
+        error = 'Passwords do not match.'
+    else:
+        try:
+            con = sqlite3.connect('twitter_clone.db')
+            cur = con.cursor()
+            cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', (submitted_username, submitted_password))
+            con.commit()
+            con.close()
+            response = RedirectResponse(url='/')
+            response.set_cookie(key='username', value=submitted_username)
+            response.set_cookie(key='password', value=submitted_password)
+            return response
+        except sqlite3.IntegrityError:
+            error = 'An account with that username already exists.'
 
     return templates.TemplateResponse(
         request=request,
