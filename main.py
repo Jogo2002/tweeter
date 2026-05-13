@@ -280,6 +280,7 @@ async def create_user(request: Request):
     submitted_username = request.query_params.get('username')
     submitted_password = request.query_params.get('password')
     submitted_password2 = request.query_params.get('password2')
+    submitted_age = request.query_params.get('age')
 
     error = None
 
@@ -296,7 +297,8 @@ async def create_user(request: Request):
         try:
             con = sqlite3.connect('twitter_clone.db')
             cur = con.cursor()
-            cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', (submitted_username, submitted_password))
+            age_value = int(submitted_age) if submitted_age else None
+            cur.execute('INSERT INTO users (username, password, age) VALUES (?, ?, ?)', (submitted_username, submitted_password, age_value))
             con.commit()
             con.close()
             response = RedirectResponse(url='/')

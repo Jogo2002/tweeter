@@ -1,9 +1,12 @@
 """
-adds ~150 random messages to the existing twitter_clone.db.
+populates the existing twitter_clone.db with 200 users and 200 messages each (40,000 total).
 """
 
 import sqlite3
 import random
+
+NUM_USERS = 200
+MESSAGES_PER_USER = 200
 
 SAMPLE_MESSAGES = [
     "Just had coffee, feeling great.",
@@ -31,25 +34,42 @@ SAMPLE_MESSAGES = [
     "Just finished my homework.",
     "Studying for finals.",
     "Visit https://example.com for more info.",
+    "Izbicki is the best professor!",
 ]
 
-con = sqlite3.connect("twitter_clone.db")
+con = sqlite3.connect("twitter_clone.db", timeout=10.0)
 cur = con.cursor()
 
-cur.execute("SELECT id FROM users")
-user_ids = [row[0] for row in cur.fetchall()]
+# step 1: create 200 bot users (skip any that already exist).
+user_rows = []
+for i in range(1, NUM_USERS + 1):
+    username = f"bot{i:03d}"
+    password = f"pw{i:03d}"
+    age = random.randint(18, 70)
+    user_rows.append((username, password, age))
 
-if not user_ids:
-    print("No users in the database. Run db_create.py first.")
-else:
-    for _ in range(150):
-        sender_id = random.choice(user_ids)
-        message = random.choice(SAMPLE_MESSAGES)
-        cur.execute(
-            "INSERT INTO messages (sender_id, message) VALUES (?, ?)",
-            (sender_id, message),
-        )
-    con.commit()
-    print("Inserted 150 messages.")
+cur.executemany(
+    "INSERT OR IGNORE INTO users (username, password, age) VALUES (?, ?, ?)",
+    user_rows,
+)
 
+# step 2: look up the ids of all bot users.
+cur.execute("SELECT id FROM users WHERE username LIKE 'bot%'")
+bot_ids = [row[0] for row in cur.fetchall()]
+print(f"Found {len(bot_ids)} bot users to post messages from.")
+
+# step 3: build 200 messages per bot user and insert them all in one batch.
+message_rows = []
+for user_id in bot_ids:
+    for _ in range(MESSAGES_PER_USER):
+        message_rows.append((user_id, random.choice(SAMPLE_MESSAGES)))
+
+print(f"Inserting {len(message_rows)} messages...")
+cur.executemany(
+    "INSERT INTO messages (sender_id, message) VALUES (?, ?)",
+    message_rows,
+)
+
+con.commit()
 con.close()
+print("Done.")
