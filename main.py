@@ -107,6 +107,23 @@ async def index(request: Request):
     )
     con.close()
 
+@app.get('/messages.json')
+async def messages_json():
+    con = sqlite3.connect('twitter_clone.db')
+    cur = con.cursor()
+    cur.execute('''
+        SELECT users.username, users.age, messages.message, messages.created_at, messages.id
+        FROM messages
+        JOIN users ON messages.sender_id = users.id
+        ORDER BY messages.created_at DESC
+    ''')
+    rows = cur.fetchall()
+    con.close()
+    return [
+        {"id": r[4], "username": r[0], "age": r[1], "message": r[2], "created_at": r[3]}
+        for r in rows
+    ]
+
 @app.get('/logout', response_class=HTMLResponse)
 async def logout(request: Request):
     response = templates.TemplateResponse(

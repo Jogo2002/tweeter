@@ -15,6 +15,7 @@
 
 {% for message in messages %}
     <div>
+        <img src="https://robohash.org/{{ message.username }}" width="60" height="60">
         <p><em><a href="/user/{{ message.username }}">@{{ message.username }}</a></em>, Age: {{ message.age }}</p>
         <p>{{ message.message|detect_url }}</p>
         <p>{{ message.created_at }}</p>

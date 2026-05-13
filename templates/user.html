@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<img src="https://robohash.org/{{ profile_username }}" alt="{{ profile_username }}" width="120" height="120">
 <h2>@{{ profile_username }}</h2>
 {% if profile_age %}
 <p>Age: {{ profile_age }}</p>
