@@ -215,7 +215,7 @@ async def login(request: Request): # can't write doctests for async functions
                 return response
         con.close()
 
-    response = templates.TemplateResponse(
+    return templates.TemplateResponse(
         request=request,
         name='login.html',
         context={
@@ -224,9 +224,6 @@ async def login(request: Request): # can't write doctests for async functions
             'error': error,
         }
     )
-    response.set_cookie(key='username', value=submitted_username)
-    response.set_cookie(key='password', value=submitted_password)
-    return response
 
 @app.get('/create_message', response_class=HTMLResponse)
 async def create_message(request: Request):
