@@ -9,7 +9,7 @@ URL = "http://127.0.0.1:8080"
 
 
 print("Test 1: SQL injection in /create_user")
-# try to drop the users table by putting sql in the username field.
+# try to drop the users table by putting sql in the username field
 requests.get(f"{URL}/create_user", params={
     "username": "hacker'; DROP TABLE users; --",
     "password": "x",
@@ -26,7 +26,7 @@ else:
 
 
 print("Test 2: SQL injection in /login")
-# classic tautology: if injection worked, this would log us in as someone.
+# if injection worked, this would log us in as someone.
 login = requests.get(f"{URL}/login", params={
     "username": "' OR '1'='1",
     "password": "anything",
