@@ -82,7 +82,7 @@ async def index(request: Request):
 
     # showing only 50 messages 
     try:
-        page = max(0, int(request.query_params.get('page', 0)))
+        page = max(0, min(int(request.query_params.get('page', 0)), 10_000_000))
     except ValueError:
         page = 0
     page_size = 50
@@ -296,11 +296,16 @@ async def create_user(request: Request):
                     break
         if error is None and submitted_password != submitted_password2:
             error = 'Passwords do not match.'
+        age_value = None
+        if error is None and submitted_age:
+            try:
+                age_value = int(submitted_age)
+            except ValueError:
+                error = 'Age must be a whole number.'
         if error is None:
             try:
                 con = sqlite3.connect('twitter_clone.db')
                 cur = con.cursor()
-                age_value = int(submitted_age) if submitted_age else None
                 cur.execute('INSERT INTO users (username, password, age) VALUES (?, ?, ?)', (submitted_username, submitted_password, age_value))
                 con.commit()
                 con.close()
